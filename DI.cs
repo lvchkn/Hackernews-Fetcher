@@ -1,12 +1,35 @@
+using HackernewsFetcher;
+using Models;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.IdGenerators;
+using MongoDB.Bson.Serialization.Serializers;
 using Polly;
 using RabbitConnections;
 using RabbitConnections.Publisher;
 using RabbitMQ.Client;
+using Repos.CommentsRepository;
+using Repos.StoriesRepository;
+using Services;
 
 namespace DI;
 
 public static class DI
 {
+    public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddRabbit(configuration);
+        services.AddHttp(configuration);
+        services.AddMongoDb(configuration);
+        
+        services.AddSingleton<IApiConnector, ApiConnector>();
+        services.AddSingleton<ICommentsRepository, CommentsRepository>();
+        services.AddSingleton<IStoriesRepository, StoriesRepository>();
+        services.AddHostedService<Worker>();
+
+        return services;
+    }
+
     public static IServiceCollection AddRabbit(this IServiceCollection services, IConfiguration configuration)
     {
         var rabbitHostname = configuration.GetValue<string>("RabbitMq:Hostname");
@@ -39,6 +62,31 @@ public static class DI
             .AddTransientHttpErrorPolicy(builder => 
                 builder.WaitAndRetryAsync(retryCount: 5, retryAttempt => 
                     TimeSpan.FromSeconds(Math.Pow(2.0, retryAttempt))));
+
+        return services;
+    }
+
+    public static IServiceCollection AddMongoDb(this IServiceCollection services, IConfiguration configuration)
+    {
+        BsonClassMap.RegisterClassMap<Comment>(cm =>
+        {
+            cm.AutoMap();
+            cm.GetMemberMap(c => c.Id).SetIgnoreIfDefault(true);
+            cm.SetIdMember(cm.GetMemberMap(c => c.Id));
+            cm.IdMemberMap.SetIdGenerator(StringObjectIdGenerator.Instance);
+            cm.IdMemberMap.SetSerializer(new StringSerializer(BsonType.String));
+        });
+
+        BsonClassMap.RegisterClassMap<Story>(cm =>
+        {
+            cm.AutoMap();
+            cm.GetMemberMap(c => c.Id).SetIgnoreIfDefault(true);
+            cm.SetIdMember(cm.GetMemberMap(c => c.Id));
+            cm.IdMemberMap.SetIdGenerator(StringObjectIdGenerator.Instance);
+            cm.IdMemberMap.SetSerializer(new StringSerializer(BsonType.String));
+        });
+
+        services.Configure<MongoSettings>(configuration?.GetSection("MongoDb")!);
 
         return services;
     }

@@ -17,7 +17,9 @@ public class Worker : BackgroundService
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) 
-    { 
+    {
+        _logger.LogInformation("Starting fetching...");
+
         while(!stoppingToken.IsCancellationRequested)
         {
             await foreach (var story in _apiConnector.GetTopStories().WithCancellation(stoppingToken))
@@ -28,7 +30,7 @@ public class Worker : BackgroundService
                 }
             }
 
-            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
         }
     }
 }
