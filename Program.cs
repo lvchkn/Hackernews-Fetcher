@@ -1,24 +1,23 @@
-using HackernewsFetcher;
-using Services;
 using DI;
 
-var configuration = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json")
-    .AddJsonFile("appsettings.development.json")
-    .AddEnvironmentVariables()
-    .Build();
+var builder = WebApplication.CreateBuilder();
 
-var host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices(services =>
-    {
-        services.AddRabbit(configuration);
+builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-        services.AddHttp(configuration);
+builder.Services.AddServices(builder.Configuration);
 
-        services.AddSingleton<IApiConnector, ApiConnector>();
-        
-        services.AddHostedService<Worker>();
-    })
-    .Build();
+var app = builder.Build();
 
-await host.RunAsync();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.MapStoriesEndpoints();
+
+app.Run();
+
