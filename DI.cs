@@ -5,6 +5,8 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.IdGenerators;
 using MongoDB.Bson.Serialization.Serializers;
 using Polly;
+using Polly.Extensions.Http;
+using Polly.Timeout;
 using RabbitConnections;
 using RabbitConnections.Publisher;
 using RabbitMQ.Client;
@@ -56,12 +58,22 @@ public static class DI
     {
         var hackernewsApiUrl = configuration.GetValue<string>("HackernewsApi:Url");
 
+        var retryPolicy = HttpPolicyExtensions
+            .HandleTransientHttpError()
+            .Or<TimeoutRejectedException>()
+            .WaitAndRetryAsync(retryCount: 5, retryAttempt => 
+                TimeSpan.FromSeconds(Math.Pow(2.0, retryAttempt)));
+
+        var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(45);
+
         services
-            .AddHttpClient("ApiV0", options => 
-                options.BaseAddress = new Uri(hackernewsApiUrl ?? string.Empty))
-            .AddTransientHttpErrorPolicy(builder => 
-                builder.WaitAndRetryAsync(retryCount: 5, retryAttempt => 
-                    TimeSpan.FromSeconds(Math.Pow(2.0, retryAttempt))));
+            .AddHttpClient("ApiV0", options =>
+            { 
+                options.BaseAddress = new Uri(hackernewsApiUrl ?? string.Empty);
+                options.Timeout = TimeSpan.FromSeconds(600);
+            })
+            .AddPolicyHandler(retryPolicy)
+            .AddPolicyHandler(timeoutPolicy);
 
         return services;
     }
