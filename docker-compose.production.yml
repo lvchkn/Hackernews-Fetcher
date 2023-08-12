@@ -1,8 +1,7 @@
 version: "3"
 services:
   fetcher:
-    build:
-      context: .
+    image: ghcr.io/lvchkn/hnfetcher:latest
     ports:
       - 5286:5286
     environment:
