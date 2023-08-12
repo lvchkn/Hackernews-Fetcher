@@ -1,8 +1,8 @@
-name: deploy
+name: deployment
 
 on:
   workflow_run:
-    workflows: ["build-and-test"]
+    workflows: ["build"]
     branches: [main]
     types:
       - completed
@@ -48,7 +48,7 @@ jobs:
           echo MONGO_USER=${{ secrets.MONGO_USER }} >> .env
           echo MongoDb__ConnectionString=${{ secrets.MONGODB__CONNECTIONSTRING }} >> .env
 
-      - name: copy file via ssh key
+      - name: Copy file via ssh key
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.HOST }}
