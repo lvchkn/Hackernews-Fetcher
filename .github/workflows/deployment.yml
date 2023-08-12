@@ -8,8 +8,8 @@ on:
       - completed
 
 jobs:
-  push-to-registry:
-    name: Push Docker image to Github registry
+  deploy:
+    name: Deploy to server
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -35,10 +35,6 @@ jobs:
         run: |
           docker push ghcr.io/lvchkn/hnfetcher:latest
 
-  copy-via-ssh:
-    name: Copy docker-compose.yml to server via ssh
-    runs-on: ubuntu-latest
-    steps:
       - name: Create .env file
         run: |
           touch .env
@@ -58,11 +54,7 @@ jobs:
           source: "./docker-compose.production.yml,./.env"
           target: "~/hnfeed-proj/hnfetcher"
 
-  deploy:
-    name: Deploy to server
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to server
+      - name: Start compose stack
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.HOST }}
