@@ -38,7 +38,7 @@ jobs:
       - name: Create .env file
         run: |
           touch .env
-          echo RabbitMq:UserName=${{ secrets.RABBITMQ__USERNAME }} >> .env
+          echo RabbitMq:Username=${{ secrets.RABBITMQ__USERNAME }} >> .env
           echo RabbitMq:Password=${{ secrets.RABBITMQ__PASSWORD }} >> .env
           echo MONGO_PW=${{ secrets.MONGO_PW }} >> .env
           echo MONGO_USER=${{ secrets.MONGO_USER }} >> .env
