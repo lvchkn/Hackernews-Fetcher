@@ -39,11 +39,6 @@ public static class DI
         var rabbitUsername = configuration.GetValue<string>("RabbitMq:Username");
         var rabbitPassword = configuration.GetValue<string>("RabbitMq:Password");
 
-        Console.WriteLine($"hostname is {rabbitHostname}");
-        Console.WriteLine($"rabbitPort is {rabbitPort}");
-        Console.WriteLine($"rabbitUsername is {rabbitUsername}");
-        Console.WriteLine($"rabbitPassword is {rabbitPassword}");
-
         services.AddSingleton(_ => new ConnectionFactory()
         {
             HostName = rabbitHostname,
