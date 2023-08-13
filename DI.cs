@@ -44,7 +44,8 @@ public static class DI
             HostName = rabbitHostname,
             Port = rabbitPort,
             UserName = rabbitUsername,
-            Password = rabbitPassword
+            Password = rabbitPassword,
+            VirtualHost = "/"
         });
 
         services.AddSingleton<IChannelFactory, ChannelFactory>();
