@@ -1,6 +1,6 @@
-using Models;
+using Hackernews_Fetcher.Models;
 
-namespace Repos.StoriesRepository;
+namespace Hackernews_Fetcher.Repos;
 
 public interface IStoriesRepository
 {

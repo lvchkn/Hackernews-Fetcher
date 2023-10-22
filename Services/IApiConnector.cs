@@ -1,9 +1,9 @@
-using Models;
+using Hackernews_Fetcher.Models;
 
-namespace Services;
+namespace Hackernews_Fetcher.Services;
 
 public interface IApiConnector
 {
-    Task<int[]?> GetTopStoryIds(CancellationToken token);
+    IAsyncEnumerable<StoryDto?> GetNewStories();
     IAsyncEnumerable<StoryDto?> GetTopStories();
 }

@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Utils;
+namespace Hackernews_Fetcher.Utils;
 
 public static class ItemUtils
 {

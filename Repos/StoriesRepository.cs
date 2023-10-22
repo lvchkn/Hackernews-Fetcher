@@ -1,8 +1,8 @@
+using Hackernews_Fetcher.Models;
 using Microsoft.Extensions.Options;
-using Models;
 using MongoDB.Driver;
 
-namespace Repos.StoriesRepository;
+namespace Hackernews_Fetcher.Repos;
 
 public class StoriesRepository : IStoriesRepository
 {
@@ -40,7 +40,7 @@ public class StoriesRepository : IStoriesRepository
         var storiesCursor = await _storiesCollection.FindAsync(_ => true);
 
         var stories = await storiesCursor.ToListAsync();
-        var storyDtos = stories.Select(story => MapToStoryDto(story)).ToList();
+        var storyDtos = stories.Select(MapToStoryDto).ToList();
 
         return storyDtos;
     }
@@ -59,12 +59,12 @@ public class StoriesRepository : IStoriesRepository
     public async Task AddAsync(StoryDto storyDto)
     {
         var story = MapToStory(storyDto);
-        var filter = Builders<Story>.Filter.Eq(story => story.Id, story.Id);
+        var filter = Builders<Story>.Filter.Eq(s => s.Id, story.Id);
 
         await _storiesCollection.ReplaceOneAsync(filter, story, new ReplaceOptions { IsUpsert = true });
     }
 
-    private Story MapToStory(StoryDto storyDto)
+    private static Story MapToStory(StoryDto storyDto)
     {
         return new Story
         {
@@ -80,7 +80,7 @@ public class StoriesRepository : IStoriesRepository
         };
     }
 
-    private StoryDto MapToStoryDto(Story story)
+    private static StoryDto MapToStoryDto(Story story)
     {
         return new StoryDto
         {

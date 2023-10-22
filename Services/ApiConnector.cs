@@ -1,16 +1,18 @@
 using System.Text.Json;
-using Models;
-using Repos.StoriesRepository;
+using Hackernews_Fetcher.Models;
+using Hackernews_Fetcher.Repos;
 
-namespace Services;
+namespace Hackernews_Fetcher.Services;
 
 public class ApiConnector : IApiConnector
 {
     private readonly IStoriesRepository _storiesRepo;
-    private readonly ILogger<ApiConnector> _logger;
-    private readonly HttpClient _client;
+    private readonly HttpClient _httpClient;
+    
     private const string ApiUrlItem = "item/{0}.json";
     private const string ApiUrlNewStories = "newstories.json";
+    private const string ApiUrlTopStories = "topstories.json";
+    
     private const int MaxStoriesInBatch = 50;
 
     private readonly JsonSerializerOptions _jsonSerializerOptions = new()
@@ -18,19 +20,15 @@ public class ApiConnector : IApiConnector
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public ApiConnector(
-        ILogger<ApiConnector> logger, 
-        IHttpClientFactory clientFactory,
-        IStoriesRepository storiesRepo)
+    public ApiConnector(IHttpClientFactory clientFactory, IStoriesRepository storiesRepo)
     {
-        _logger = logger;
-        _client = clientFactory.CreateClient("ApiV0");
+        _httpClient = clientFactory.CreateClient("ApiV0");
         _storiesRepo = storiesRepo;
     }
 
-    public async Task<int[]?> GetTopStoryIds(CancellationToken token)
+    private async Task<int[]?> GetStoriesIds(string apiUrl)
     {
-        var response = await _client.GetAsync(ApiUrlNewStories);
+        var response = await _httpClient.GetAsync(apiUrl);
         var responseString = await response.Content.ReadAsStringAsync();
 
         var storyIds = JsonSerializer.Deserialize<int[]>(responseString, _jsonSerializerOptions) ?? null;
@@ -38,10 +36,34 @@ public class ApiConnector : IApiConnector
         return storyIds;
     }
 
+    private async Task<StoryDto?> GetStory(int id)
+    {
+        var response = await _httpClient.GetAsync(string.Format(ApiUrlItem, id));
+        var responseString = await response.Content.ReadAsStringAsync();
+        var storyDto = JsonSerializer.Deserialize<StoryDto>(responseString, _jsonSerializerOptions);
+
+        return storyDto;
+    }
+
     public async IAsyncEnumerable<StoryDto?> GetTopStories()
     {
-        var token = new CancellationTokenSource().Token;
-        var storyIds = await GetTopStoryIds(token);
+        var storyIds = await GetStoriesIds(ApiUrlTopStories);
+        
+        if (storyIds is null)
+        {
+            yield return null;
+        }
+
+        foreach (var id in storyIds!)
+        {
+            var storyDto = await GetStory(id);
+            yield return storyDto;
+        }
+    }
+
+    public async IAsyncEnumerable<StoryDto?> GetNewStories()
+    {
+        var storyIds = await GetStoriesIds(ApiUrlNewStories);
 
         if (storyIds is null)
         {
@@ -55,7 +77,8 @@ public class ApiConnector : IApiConnector
         }
         catch (Exception)
         {
-            lastSavedId = storyIds!.Min() - 1; // fallback in case db is empty
+            var fallback = storyIds!.Min() - 1;
+            lastSavedId = fallback;
         }
          
         var newIds = storyIds!.Where(id => id > lastSavedId)
@@ -64,9 +87,7 @@ public class ApiConnector : IApiConnector
 
         foreach (var id in newIds)
         {
-            var response = await _client.GetAsync(string.Format(ApiUrlItem, id));
-            var responseString = await response.Content.ReadAsStringAsync();
-            var storyDto = JsonSerializer.Deserialize<StoryDto>(responseString, _jsonSerializerOptions);
+            var storyDto = await GetStory(id);
 
             if (storyDto is null) continue;
 

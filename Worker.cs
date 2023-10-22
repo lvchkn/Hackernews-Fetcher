@@ -1,7 +1,7 @@
-using RabbitConnections.Publisher;
-using Services;
+using Hackernews_Fetcher.Rmq.Publisher;
+using Hackernews_Fetcher.Services;
 
-namespace HackernewsFetcher;
+namespace Hackernews_Fetcher;
 
 public class Worker : BackgroundService
 {
@@ -22,7 +22,7 @@ public class Worker : BackgroundService
 
         while(!stoppingToken.IsCancellationRequested)
         {
-            await foreach (var story in _apiConnector.GetTopStories().WithCancellation(stoppingToken))
+            await foreach (var story in _apiConnector.GetNewStories().WithCancellation(stoppingToken))
             {
                 if (story is not null) 
                 {

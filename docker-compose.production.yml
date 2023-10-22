@@ -3,7 +3,7 @@ services:
   fetcher:
     image: ghcr.io/lvchkn/hnfetcher:latest
     ports:
-      - 5286:5286
+      - "5286:5286"
     environment:
       - ASPNETCORE_ENVIRONMENT=production
       - MongoDb:ConnectionString=mongodb://${MONGO_USER}:${MONGO_PW}@mongodb:27017
@@ -17,6 +17,8 @@ services:
       - mongodb
   rabbitmq:
     image: rabbitmq:management-alpine
+    ports:
+      - "5672:5672"
     environment:
       - RABBITMQ_DEFAULT_USER=${RMQ_USER}
       - RABBITMQ_DEFAULT_PASS=${RMQ_PW}

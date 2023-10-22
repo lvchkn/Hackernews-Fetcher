@@ -1,5 +1,8 @@
-using HackernewsFetcher;
-using Models;
+using Hackernews_Fetcher.Models;
+using Hackernews_Fetcher.Repos;
+using Hackernews_Fetcher.Rmq;
+using Hackernews_Fetcher.Rmq.Publisher;
+using Hackernews_Fetcher.Services;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.IdGenerators;
@@ -7,37 +10,35 @@ using MongoDB.Bson.Serialization.Serializers;
 using Polly;
 using Polly.Extensions.Http;
 using Polly.Timeout;
-using RabbitConnections;
-using RabbitConnections.Publisher;
 using RabbitMQ.Client;
-using Repos.CommentsRepository;
-using Repos.StoriesRepository;
-using Services;
 
-namespace DI;
+namespace Hackernews_Fetcher;
 
 public static class DI
 {
-    public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
+    private static IConfiguration _configuration = default!;
+    public static IServiceCollection AddDependencies(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddRabbit(configuration);
-        services.AddHttp(configuration);
-        services.AddMongoDb(configuration);
+        _configuration = configuration;
         
-        services.AddSingleton<IApiConnector, ApiConnector>();
-        services.AddSingleton<ICommentsRepository, CommentsRepository>();
-        services.AddSingleton<IStoriesRepository, StoriesRepository>();
-        services.AddHostedService<Worker>();
-
+        services
+            .AddRabbit()
+            .AddHttp()
+            .AddMongoDb()
+            .AddSingleton<IApiConnector, ApiConnector>()
+            .AddSingleton<ICommentsRepository, CommentsRepository>()
+            .AddSingleton<IStoriesRepository, StoriesRepository>()
+            .AddHostedService<Worker>();
+        
         return services;
     }
 
-    public static IServiceCollection AddRabbit(this IServiceCollection services, IConfiguration configuration)
+    private static IServiceCollection AddRabbit(this IServiceCollection services)
     {
-        var rabbitHostname = configuration.GetValue<string>("RabbitMq:Hostname");
-        var rabbitPort = configuration.GetValue<int>("RabbitMq:Port");
-        var rabbitUsername = configuration.GetValue<string>("RabbitMq:Username");
-        var rabbitPassword = configuration.GetValue<string>("RabbitMq:Password");
+        var rabbitHostname = _configuration.GetValue<string>("RabbitMq:Hostname");
+        var rabbitPort = _configuration.GetValue<int>("RabbitMq:Port");
+        var rabbitUsername = _configuration.GetValue<string>("RabbitMq:Username");
+        var rabbitPassword = _configuration.GetValue<string>("RabbitMq:Password");
 
         services.AddSingleton(_ => new ConnectionFactory()
         {
@@ -55,9 +56,9 @@ public static class DI
         return services;
     }
 
-    public static IServiceCollection AddHttp(this IServiceCollection services, IConfiguration configuration)
+    private static IServiceCollection AddHttp(this IServiceCollection services)
     {
-        var hackernewsApiUrl = configuration.GetValue<string>("HackernewsApi:Url");
+        var hackernewsApiUrl = _configuration.GetValue<string>("HackernewsApi:Url");
 
         var retryPolicy = HttpPolicyExtensions
             .HandleTransientHttpError()
@@ -79,7 +80,7 @@ public static class DI
         return services;
     }
 
-    public static IServiceCollection AddMongoDb(this IServiceCollection services, IConfiguration configuration)
+    private static IServiceCollection AddMongoDb(this IServiceCollection services)
     {
         BsonClassMap.RegisterClassMap<Comment>(cm =>
         {
@@ -99,7 +100,7 @@ public static class DI
             cm.IdMemberMap.SetSerializer(new StringSerializer(BsonType.String));
         });
 
-        services.Configure<MongoSettings>(configuration?.GetSection("MongoDb")!);
+        services.Configure<MongoSettings>(_configuration.GetSection("MongoDb"));
 
         return services;
     }

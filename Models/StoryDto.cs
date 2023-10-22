@@ -1,10 +1,10 @@
 namespace Hackernews_Fetcher.Models;
 
-public record Story
+public record StoryDto : IMessage
 {
     public string By { get; init; } = string.Empty;
     public int Descendants { get; init; }
-    public string Id { get; init; } = string.Empty;
+    public int Id { get; init; }
     public int[] Kids { get; init; } = Array.Empty<int>();
     public int Score { get; init; }
     public int Time { get; init; }

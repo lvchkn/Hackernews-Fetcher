@@ -1,14 +1,13 @@
-using DI;
+using Hackernews_Fetcher;
+using Hackernews_Fetcher.Controllers;
 
 var builder = WebApplication.CreateBuilder();
 builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-builder.Services.AddServices(builder.Configuration);
+builder.Services.AddDependencies(builder.Configuration);
 
 var app = builder.Build();
 

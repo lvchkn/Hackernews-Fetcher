@@ -1,5 +1,7 @@
 .vscode/
+.idea/
 bin/
 obj/
 appsettings.Development.json
 .env
+/Folder.DotSettings.user

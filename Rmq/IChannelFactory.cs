@@ -1,6 +1,6 @@
 using RabbitMQ.Client;
 
-namespace RabbitConnections;
+namespace Hackernews_Fetcher.Rmq;
 
 public interface IChannelFactory
 {

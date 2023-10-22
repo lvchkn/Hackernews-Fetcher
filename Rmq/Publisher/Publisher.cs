@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.Json;
-using Models;
+using Hackernews_Fetcher.Models;
 using RabbitMQ.Client;
 
-namespace RabbitConnections.Publisher;
+namespace Hackernews_Fetcher.Rmq.Publisher;
 
 public class Publisher
 {
