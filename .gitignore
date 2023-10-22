@@ -3,5 +3,7 @@
 bin/
 obj/
 appsettings.Development.json
-.env
+appsettings.Production.json
+docker-compose.test.yml
+.env*
 /Folder.DotSettings.user

@@ -7,10 +7,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=production
       - MongoDb:ConnectionString=mongodb://${MONGO_USER}:${MONGO_PW}@mongodb:27017
-      - RabbitMq:Hostname=rabbitmq
+      - RabbitMq:Hostname=${RMQ_HOST}
       - RabbitMq:Username=${RMQ_USER}
       - RabbitMq:Password=${RMQ_PW}
-      - RabbitMq:Port=5672
+      - RabbitMq:Port=${RMQ_PORT}
     restart: on-failure
     depends_on:
       - rabbitmq
