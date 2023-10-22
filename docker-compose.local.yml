@@ -4,8 +4,8 @@ services:
     image: rabbitmq:management-alpine
     hostname: rabbitmq
     ports:
-      - "5673:5672"
-      - "15673:15672"
+      - "5672:5672"
+      - "15672:15672"
   mongo:
     image: mongo:latest
     container_name: mongodb

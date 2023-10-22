@@ -1,8 +1,8 @@
 namespace Hackernews_Fetcher.Models;
 
-public record Comment
+public record CommentDto : IMessage
 {
-    public string Id { get; init; } = string.Empty;
+    public int Id { get; init; }
     public string By { get; init; } = string.Empty;
     public int[] Kids { get; init; } = Array.Empty<int>();
     public int Parent { get; init; }

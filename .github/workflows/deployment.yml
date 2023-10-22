@@ -38,11 +38,13 @@ jobs:
       - name: Create .env file
         run: |
           touch .env
-          echo RMQ_USER=${{ secrets.RABBITMQ__USERNAME }} >> .env
-          echo RMQ_PW=${{ secrets.RABBITMQ__PASSWORD }} >> .env
-          echo MONGO_PW=${{ secrets.MONGO_PW }} >> .env
+          echo RMQ_USER=${{ secrets.RMQ_USER }} >> .env
+          echo RMQ_PW=${{ secrets.RMQ_PW }} >> .env
+          echo RMQ_HOST=${{ secrets.RMQ_HOST }} >> .env
+          echo RMQ_PORT=${{ secrets.RMQ_PORT }} >> .env
+
           echo MONGO_USER=${{ secrets.MONGO_USER }} >> .env
-          echo MongoDb__ConnectionString=${{ secrets.MONGODB__CONNECTIONSTRING }} >> .env
+          echo MONGO_PW=${{ secrets.MONGO_PW }} >> .env
 
       - name: Copy file via ssh key
         uses: appleboy/scp-action@v0.1.4

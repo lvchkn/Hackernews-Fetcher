@@ -1,8 +1,8 @@
+using Hackernews_Fetcher.Models;
 using Microsoft.Extensions.Options;
-using Models;
 using MongoDB.Driver;
 
-namespace Repos.CommentsRepository;
+namespace Hackernews_Fetcher.Repos;
 
 public class CommentsRepository : ICommentsRepository
 {
@@ -20,7 +20,7 @@ public class CommentsRepository : ICommentsRepository
         var commentsCursor = await _commentsCollection.FindAsync(_ => true);
 
         var comments = await commentsCursor.ToListAsync();
-        var commentDtos = comments.Select(comment => MapToCommentDto(comment)).ToList();
+        var commentDtos = comments.Select(MapToCommentDto).ToList();
 
         return commentDtos;
     }
@@ -47,7 +47,7 @@ public class CommentsRepository : ICommentsRepository
         };
     }
 
-    private CommentDto MapToCommentDto(Comment comment)
+    private static CommentDto MapToCommentDto(Comment comment)
     {
         return new CommentDto
         {

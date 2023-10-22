@@ -1,4 +1,4 @@
-namespace Models;
+namespace Hackernews_Fetcher.Models;
 
 public record MongoSettings
 {

@@ -1,6 +1,6 @@
-using Models;
+using Hackernews_Fetcher.Models;
 
-namespace Repos.CommentsRepository;
+namespace Hackernews_Fetcher.Repos;
 
 public interface ICommentsRepository
 {
