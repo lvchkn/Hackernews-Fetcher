@@ -12,8 +12,8 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
 
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.12" />
-    <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="7.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="7.0.13" />
     <PackageReference Include="MongoDB.Driver" Version="2.22.0" />
     <PackageReference Include="RabbitMQ.Client" Version="6.6.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
