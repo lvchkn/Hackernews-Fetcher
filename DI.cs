@@ -98,6 +98,7 @@ public static class DI
             cm.SetIdMember(cm.GetMemberMap(c => c.Id));
             cm.IdMemberMap.SetIdGenerator(StringObjectIdGenerator.Instance);
             cm.IdMemberMap.SetSerializer(new StringSerializer(BsonType.String));
+            cm.SetIgnoreExtraElements(true);
         });
 
         services.Configure<MongoSettings>(_configuration.GetSection("MongoDb"));

@@ -1,5 +1,6 @@
 using Hackernews_Fetcher.Rmq.Publisher;
 using Hackernews_Fetcher.Services;
+using Hackernews_Fetcher.Utils;
 
 namespace Hackernews_Fetcher;
 
@@ -22,15 +23,15 @@ public class Worker : BackgroundService
 
         while(!stoppingToken.IsCancellationRequested)
         {
-            await foreach (var story in _apiConnector.GetNewStories().WithCancellation(stoppingToken))
+            await foreach (var storyDto in _apiConnector.GetNewStories().WithCancellation(stoppingToken))
             {
-                if (story is not null) 
+                if (storyDto is not null) 
                 {
-                    _publisher.Publish("feed", story);
+                    _publisher.Publish("feed", storyDto.MapToPublishDto());
                 }
             }
 
-            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+            await Task.Delay(TimeSpan.FromHours(3), stoppingToken);
         }
     }
 }
