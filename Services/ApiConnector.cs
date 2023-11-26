@@ -8,91 +8,86 @@ public class ApiConnector : IApiConnector
 {
     private readonly IStoriesRepository _storiesRepo;
     private readonly HttpClient _httpClient;
-    
-    private const string ApiUrlItem = "item/{0}.json";
-    private const string ApiUrlNewStories = "newstories.json";
-    private const string ApiUrlTopStories = "topstories.json";
-    
-    private const int MaxStoriesInBatch = 50;
 
-    private readonly JsonSerializerOptions _jsonSerializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
-
-    public ApiConnector(IHttpClientFactory clientFactory, IStoriesRepository storiesRepo)
+    public ApiConnector(IHttpClientFactory clientFactory,
+        IStoriesRepository storiesRepo)
     {
         _httpClient = clientFactory.CreateClient("ApiV0");
         _storiesRepo = storiesRepo;
     }
 
-    private async Task<int[]?> GetStoriesIds(string apiUrl)
+    private async Task<ApiResponse?> MakeRequestToApi(int timeThreshold, 
+        int pointsThreshold,
+        int pageNumber,
+        int pageSize,
+        string tags,
+        string query = "")
     {
-        var response = await _httpClient.GetAsync(apiUrl);
-        var responseString = await response.Content.ReadAsStringAsync();
-
-        var storyIds = JsonSerializer.Deserialize<int[]>(responseString, _jsonSerializerOptions) ?? null;
-
-        return storyIds;
-    }
-
-    private async Task<StoryDto?> GetStory(int id)
-    {
-        var response = await _httpClient.GetAsync(string.Format(ApiUrlItem, id));
-        var responseString = await response.Content.ReadAsStringAsync();
-        var storyDto = JsonSerializer.Deserialize<StoryDto>(responseString, _jsonSerializerOptions);
-
-        return storyDto;
-    }
-
-    public async IAsyncEnumerable<StoryDto?> GetTopStories()
-    {
-        var storyIds = await GetStoriesIds(ApiUrlTopStories);
+        var requestUri = $"search?query={query}" +
+                         $"&tags={tags}" +
+                         $"&page={pageNumber}" +
+                         $"&hitsPerPage={pageSize}" +
+                         $"&numericFilters=points>{pointsThreshold}," +
+                         $"created_at_i>{timeThreshold}";
         
-        if (storyIds is null)
-        {
-            yield return null;
-        }
+        var response = await _httpClient.GetAsync(requestUri);
+        var responseString = await response.Content.ReadAsStringAsync();
 
-        foreach (var id in storyIds!)
-        {
-            var storyDto = await GetStory(id);
-            yield return storyDto;
-        }
+        var apiResponseObject = JsonSerializer.Deserialize<ApiResponse>(responseString);
+
+        return apiResponseObject;
     }
 
-    public async IAsyncEnumerable<StoryDto?> GetNewStories()
+    private async Task<List<StoryHnDto>> GetStories(int timeThreshold, int pointsThreshold, string query = "")
     {
-        var storyIds = await GetStoriesIds(ApiUrlNewStories);
+        var stories = new List<StoryHnDto>();
+        
+        var apiResponseObject = await MakeRequestToApi(timeThreshold,
+            pointsThreshold,
+            0,
+            100,
+            "story",
+            query);
 
-        if (storyIds is null)
+        if (apiResponseObject is null || apiResponseObject.Stories.Length == 0)
         {
-            yield return null;
+            return stories;
         }
 
-        int lastSavedId;
-        try
+        if (apiResponseObject.NumberOfPages < 2)
         {
-           lastSavedId = await _storiesRepo.GetBiggestIdAsync();
+            return apiResponseObject.Stories.ToList();
         }
-        catch (Exception)
+
+        var requestsLimit = Math.Min(apiResponseObject.NumberOfPages, 5_000);
+        
+        for (var i = 1; i <= requestsLimit; i++)
         {
-            var fallback = storyIds!.Min() - 1;
-            lastSavedId = fallback;
+            var nextPageResponse = await MakeRequestToApi(timeThreshold, 
+                pointsThreshold,
+                i,
+                100,
+                "story",
+                query);
+            
+            if (nextPageResponse is null) continue;
+            
+            stories.AddRange(nextPageResponse.Stories);
         }
-         
-        var newIds = storyIds!.Where(id => id > lastSavedId)
-            .OrderBy(id => id)
-            .Take(MaxStoriesInBatch);
+        
+        return stories;
+    }
 
-        foreach (var id in newIds)
+    public async IAsyncEnumerable<StoryHnDto?> GetNewStories()
+    {
+        var timeThreshold = await _storiesRepo.GetLatestTimestampAsync();
+        const int pointsThreshold = 3;
+
+        var storyDtos = await GetStories(timeThreshold, pointsThreshold);
+
+        foreach (var storyDto in storyDtos)
         {
-            var storyDto = await GetStory(id);
-
-            if (storyDto is null) continue;
-
             await _storiesRepo.AddAsync(storyDto);
-
             yield return storyDto;
         }
     }
