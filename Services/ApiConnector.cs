@@ -7,16 +7,13 @@ namespace Hackernews_Fetcher.Services;
 public class ApiConnector : IApiConnector
 {
     private readonly IStoriesRepository _storiesRepo;
-    private readonly ILogger<ApiConnector> _logger;
     private readonly HttpClient _httpClient;
 
     public ApiConnector(IHttpClientFactory clientFactory,
-        IStoriesRepository storiesRepo,
-        ILogger<ApiConnector> logger)
+        IStoriesRepository storiesRepo)
     {
         _httpClient = clientFactory.CreateClient("ApiV0");
         _storiesRepo = storiesRepo;
-        _logger = logger;
     }
 
     private async Task<ApiResponse?> MakeRequestToApi(int timeThreshold, 
@@ -85,13 +82,12 @@ public class ApiConnector : IApiConnector
     {
         var timeThreshold = await _storiesRepo.GetLatestTimestampAsync();
         const int pointsThreshold = 3;
-        //1700067699
+
         var storyDtos = await GetStories(timeThreshold, pointsThreshold);
 
         foreach (var storyDto in storyDtos)
         {
             await _storiesRepo.AddAsync(storyDto);
-            _logger.LogInformation($"Story added: {storyDto}");
             yield return storyDto;
         }
     }
