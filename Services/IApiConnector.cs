@@ -4,5 +4,5 @@ namespace Hackernews_Fetcher.Services;
 
 public interface IApiConnector
 {
-    IAsyncEnumerable<StoryHnDto?> GetNewStories();
+    IAsyncEnumerable<StoryHnDto?> GetNewStoriesAsync();
 }

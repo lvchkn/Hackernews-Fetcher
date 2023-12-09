@@ -6,6 +6,6 @@ public interface IStoriesRepository
 {
     Task<int> GetLatestTimestampAsync();
     Task<List<StoryHnDto>> GetAllAsync();
-    Task<StoryHnDto> GetById(int id);
+    Task<StoryHnDto> GetByIdAsync(int id);
     Task AddAsync(StoryHnDto storyHnDto);
 }
