@@ -16,7 +16,7 @@ public class ApiConnector : IApiConnector
         _storiesRepo = storiesRepo;
     }
 
-    private async Task<ApiResponse?> MakeRequestToApi(int timeThreshold, 
+    private async Task<ApiResponse?> MakeRequestAsync(int timeThreshold, 
         int pointsThreshold,
         int pageNumber,
         int pageSize,
@@ -38,11 +38,11 @@ public class ApiConnector : IApiConnector
         return apiResponseObject;
     }
 
-    private async Task<List<StoryHnDto>> GetStories(int timeThreshold, int pointsThreshold, string query = "")
+    private async Task<List<StoryHnDto>> GetStoriesAsync(int timeThreshold, int pointsThreshold, string query = "")
     {
         var stories = new List<StoryHnDto>();
         
-        var apiResponseObject = await MakeRequestToApi(timeThreshold,
+        var apiResponseObject = await MakeRequestAsync(timeThreshold,
             pointsThreshold,
             0,
             100,
@@ -63,7 +63,7 @@ public class ApiConnector : IApiConnector
         
         for (var i = 1; i <= requestsLimit; i++)
         {
-            var nextPageResponse = await MakeRequestToApi(timeThreshold, 
+            var nextPageResponse = await MakeRequestAsync(timeThreshold, 
                 pointsThreshold,
                 i,
                 100,
@@ -78,12 +78,12 @@ public class ApiConnector : IApiConnector
         return stories;
     }
 
-    public async IAsyncEnumerable<StoryHnDto?> GetNewStories()
+    public async IAsyncEnumerable<StoryHnDto?> GetNewStoriesAsync()
     {
         var timeThreshold = await _storiesRepo.GetLatestTimestampAsync();
         const int pointsThreshold = 3;
 
-        var storyDtos = await GetStories(timeThreshold, pointsThreshold);
+        var storyDtos = await GetStoriesAsync(timeThreshold, pointsThreshold);
 
         foreach (var storyDto in storyDtos)
         {

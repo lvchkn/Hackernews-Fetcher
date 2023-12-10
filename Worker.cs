@@ -23,7 +23,7 @@ public class Worker : BackgroundService
 
         while(!stoppingToken.IsCancellationRequested)
         {
-            await foreach (var storyDto in _apiConnector.GetNewStories().WithCancellation(stoppingToken))
+            await foreach (var storyDto in _apiConnector.GetNewStoriesAsync().WithCancellation(stoppingToken))
             {
                 if (storyDto is not null) 
                 {

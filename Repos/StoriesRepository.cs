@@ -42,7 +42,7 @@ public class StoriesRepository : IStoriesRepository
         return storyDtos;
     }
 
-    public async Task<StoryHnDto> GetById(int id)
+    public async Task<StoryHnDto> GetByIdAsync(int id)
     {
         var filter = Builders<Story>.Filter.Eq(story => story.Id, id.ToString());
         var storiesCursor = await _storiesCollection.FindAsync(filter);

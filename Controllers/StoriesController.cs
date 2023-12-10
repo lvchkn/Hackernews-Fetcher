@@ -18,7 +18,7 @@ public static class StoriesController
             [FromRoute] int id,
             [FromServices] IStoriesRepository storiesRepository) => 
         {
-            var story = await storiesRepository.GetById(id);
+            var story = await storiesRepository.GetByIdAsync(id);
 
             return Results.Ok(story);
         });
