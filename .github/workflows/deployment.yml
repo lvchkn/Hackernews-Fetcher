@@ -58,7 +58,7 @@ jobs:
           target: "~/hnfeed-proj/hnfetcher"
 
       - name: Start compose stack
-        uses: appleboy/ssh-action@v1.0.0
+        uses: appleboy/ssh-action@v1.0.1
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.SSH_USERNAME }}
