@@ -47,7 +47,7 @@ jobs:
           echo MONGO_PW=${{ secrets.MONGO_PW }} >> .env
 
       - name: Copy file via ssh key
-        uses: appleboy/scp-action@v0.1.4
+        uses: appleboy/scp-action@v0.1.6
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.SSH_USERNAME }}
