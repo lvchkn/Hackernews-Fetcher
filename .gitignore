@@ -7,3 +7,4 @@ appsettings.Production.json
 docker-compose.test.yml
 .env*
 /Folder.DotSettings.user
+global.json
