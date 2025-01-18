@@ -29,12 +29,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build a Docker image
+      - name: Build and push a Docker image
         run: |
+          git fetch --tags
           docker build -t ghcr.io/lvchkn/hnfetcher:$(git describe --tags) .
-
-      - name: Push the image to ghcr
-        run: |
           docker push ghcr.io/lvchkn/hnfetcher:$(git describe --tags)
 
       - name: Create .env file
