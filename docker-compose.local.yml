@@ -1,13 +1,13 @@
 version: "3"
 services:
   rabbitmq:
-    image: rabbitmq:management-alpine
+    image: rabbitmq:3.13-management-alpine
     hostname: rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
   mongo:
-    image: mongo:latest
+    image: mongo:7.0.16-jammy
     container_name: mongodb
     ports:
       - "27017:27017"
@@ -18,7 +18,7 @@ services:
     volumes:
       - mongodata:/data/db
   mongoexpress:
-    image: mongo-express:latest
+    image: mongo-express:1.0-20-alpine3.19
     container_name: mongoexpress
     ports:
       - "8084:8081"

@@ -1,4 +1,5 @@
 using Hackernews_Fetcher.Models;
+using AutoMapper;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
@@ -7,12 +8,14 @@ namespace Hackernews_Fetcher.Repos;
 public class CommentsRepository : ICommentsRepository
 {
     private readonly IMongoCollection<Comment> _commentsCollection;
+    private readonly IMapper _mapper;
 
-    public CommentsRepository(IOptions<MongoSettings> mongoSettings)
+    public CommentsRepository(IOptions<MongoSettings> mongoSettings, IMapper mapper)
     {
         var mongoClient = new MongoClient(mongoSettings.Value.ConnectionString);
         var database = mongoClient.GetDatabase(mongoSettings.Value.FeedDatabaseName);
         _commentsCollection = database.GetCollection<Comment>(mongoSettings.Value.CommentsCollectionName);         
+        _mapper = mapper;
     }
 
     public async Task<List<CommentDto>> GetAllAsync()
@@ -20,44 +23,16 @@ public class CommentsRepository : ICommentsRepository
         var commentsCursor = await _commentsCollection.FindAsync(_ => true);
 
         var comments = await commentsCursor.ToListAsync();
-        var commentDtos = comments.Select(MapToCommentDto).ToList();
+        var commentDtos = comments.Select(comment => _mapper.Map<CommentDto>(comment)).ToList();
 
         return commentDtos;
     }
 
     public async Task AddAsync(CommentDto commentDto)
     {
-        var comment = MapToComment(commentDto);
+        var comment = _mapper.Map<Comment>(commentDto);
         var filter = Builders<Comment>.Filter.Eq(c => c.Id, comment.Id);
 
         await _commentsCollection.ReplaceOneAsync(filter, comment, new ReplaceOptions { IsUpsert = true });
-    }
-
-    private Comment MapToComment(CommentDto commentDto)
-    {
-        return new Comment
-        {
-            Id = commentDto.Id.ToString(),
-            By = commentDto.By,
-            Kids = (int[]) commentDto.Kids.Clone(),
-            Parent = commentDto.Parent,
-            Time = commentDto.Time,
-            Text = commentDto.Text,
-            Type = commentDto.Type,
-        };
-    }
-
-    private static CommentDto MapToCommentDto(Comment comment)
-    {
-        return new CommentDto
-        {
-            Id = int.Parse(comment.Id),
-            By = comment.By,
-            Kids = (int[]) comment.Kids.Clone(),
-            Parent = comment.Parent,
-            Time = comment.Time,
-            Text = comment.Text,
-            Type = comment.Type,
-        };
     }
 }

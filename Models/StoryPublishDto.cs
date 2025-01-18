@@ -4,7 +4,7 @@ public record StoryPublishDto : IMessage
 {
     public int Id { get; init; }
     public string By { get; init; } = string.Empty;
-    public int[] Kids { get; init; } = Array.Empty<int>();
+    public int[] Kids { get; init; } = [];
     public int Time { get; init; }
     public int Descendants { get; init; }
     public int Score { get; init; }

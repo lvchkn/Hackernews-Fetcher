@@ -16,7 +16,7 @@ services:
       - rabbitmq
       - mongodb
   rabbitmq:
-    image: rabbitmq:management-alpine
+    image: rabbitmq:3.13-alpine
     ports:
       - "5672:5672"
     environment:
@@ -28,7 +28,7 @@ services:
       timeout: 10s
       retries: 5
   mongodb:
-    image: mongo:latest
+    image: mongo:7.0.16-jammy
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PW}
