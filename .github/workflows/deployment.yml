@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
+        with: 
+          fetch-tags: 'true'
 
       - name: Log in to the Github Container registry
         uses: docker/login-action@v3
@@ -29,11 +31,11 @@ jobs:
 
       - name: Build a Docker image
         run: |
-          docker build -t ghcr.io/lvchkn/hnfetcher:latest .
+          docker build -t ghcr.io/lvchkn/hnfetcher:$(git describe --tags) .
 
       - name: Push the image to ghcr
         run: |
-          docker push ghcr.io/lvchkn/hnfetcher:latest
+          docker push gghcr.io/lvchkn/hnfetcher:$(git describe --tags) .
 
       - name: Create .env file
         run: |
@@ -58,7 +60,7 @@ jobs:
           target: "~/hnfeed-proj/hnfetcher"
 
       - name: Start compose stack
-        uses: appleboy/ssh-action@v1.0.0
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.SSH_USERNAME }}
