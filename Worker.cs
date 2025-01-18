@@ -23,7 +23,6 @@ public class Worker : BackgroundService
         _apiConnector = apiConnector;
         _connectionFactory = connectionFactory;
         _mapper = mapper;
-        _mapper.ConfigurationProvider.AssertConfigurationIsValid();
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) 
