@@ -1,54 +1,20 @@
 using Hackernews_Fetcher.Models;
+using AutoMapper;
+using JetBrains.Annotations;
 
 namespace Hackernews_Fetcher.Utils;
 
-public static class Mapper
+[UsedImplicitly]
+public class AutoMapperProfile : Profile
 {
-    public static Story MapToStory(this StoryHnDto storyHnDto)
+    public AutoMapperProfile()
     {
-        return new Story
-        {
-            Id = storyHnDto.Id.ToString(),
-            By = storyHnDto.By,
-            Kids = storyHnDto.Kids,
-            Descendants = storyHnDto.Descendants,
-            Score = storyHnDto.Score,
-            Time = storyHnDto.Time,
-            Title = storyHnDto.Title,
-            Url = storyHnDto.Url,
-            Text = storyHnDto.Text,
-        };
-    }
-    
-    public static StoryHnDto MapToStoryDto(this Story story)
-    {
-        return new StoryHnDto
-        {
-            Id = int.Parse(story.Id),
-            By = story.By,
-            Kids = story.Kids,
-            Descendants = story.Descendants,
-            Score = story.Score,
-            Time = story.Time,
-            Title = story.Title,
-            Url = story.Url,
-            Text = story.Text,
-        };
-    }
-    
-    public static StoryPublishDto MapToPublishDto(this StoryHnDto storyHnDto)
-    {
-        return new StoryPublishDto
-        {
-            Id = storyHnDto.Id,
-            By = storyHnDto.By,
-            Kids = storyHnDto.Kids,
-            Descendants = storyHnDto.Descendants,
-            Score = storyHnDto.Score,
-            Time = storyHnDto.Time,
-            Title = storyHnDto.Title,
-            Url = storyHnDto.Url,
-            Text = storyHnDto.Text,
-        };
+        CreateMap<Story, StoryHnDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => int.Parse(src.Id)));
+        CreateMap<StoryHnDto, Story>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.ToString()));
+        CreateMap<StoryHnDto, StoryPublishDto>().ReverseMap();
+
+        CreateMap<Comment, CommentDto>().ReverseMap();
     }
 }

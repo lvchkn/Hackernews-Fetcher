@@ -1,11 +1,13 @@
 using System.Text.Json.Serialization;
+using JetBrains.Annotations;
 
 namespace Hackernews_Fetcher.Models;
 
-public record ApiResponse
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
+public record ApiResponse<T> where T: IMessage
 {
     [JsonPropertyName("hits")] 
-    public StoryHnDto[] Stories { get; init; } = Array.Empty<StoryHnDto>();
+    public T[] Data { get; init; } = [];
     
     [JsonPropertyName("hitsPerPage")]
     public int PageSize { get; init; }

@@ -1,78 +1,96 @@
+using System.Runtime.Serialization;
 using System.Text.Json;
 using Hackernews_Fetcher.Models;
 using Hackernews_Fetcher.Repos;
+using AutoMapper;
 
 namespace Hackernews_Fetcher.Services;
 
 public class ApiConnector : IApiConnector
 {
-    private readonly IStoriesRepository _storiesRepo;
     private readonly HttpClient _httpClient;
+    private readonly IStoriesRepository _storiesRepo;
+    private readonly IMapper _mapper;
+    private readonly ILogger<ApiConnector> _logger;
+    private readonly JsonSerializerOptions _jsonSerializerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
 
     public ApiConnector(IHttpClientFactory clientFactory,
-        IStoriesRepository storiesRepo)
+        IStoriesRepository storiesRepo, 
+        IMapper mapper, 
+        ILogger<ApiConnector> logger)
     {
         _httpClient = clientFactory.CreateClient("ApiV0");
         _storiesRepo = storiesRepo;
+        _mapper = mapper;
+        _logger = logger;
     }
 
-    private async Task<ApiResponse?> MakeRequestAsync(int timeThreshold, 
-        int pointsThreshold,
-        int pageNumber,
-        int pageSize,
-        string tags,
-        string query = "")
+    private async Task<T> GetApiResponse<T>(string requestUri)
     {
-        var requestUri = $"search?query={query}" +
-                         $"&tags={tags}" +
-                         $"&page={pageNumber}" +
-                         $"&hitsPerPage={pageSize}" +
-                         $"&numericFilters=points>{pointsThreshold}," +
-                         $"created_at_i>{timeThreshold}";
-        
         var response = await _httpClient.GetAsync(requestUri);
         var responseString = await response.Content.ReadAsStringAsync();
 
-        var apiResponseObject = JsonSerializer.Deserialize<ApiResponse>(responseString);
+        var apiResponseObject = JsonSerializer.Deserialize<T>(responseString, _jsonSerializerOptions);
 
-        return apiResponseObject;
+        return apiResponseObject ?? throw new SerializationException("Could not deserialize the API response.");
+    }
+    
+    private async Task<List<CommentDto>> GetCommentsForStory(StoryHnDto storyDto)
+    {
+        var comments = new List<CommentDto>();
+
+        foreach (var commentId in storyDto.Kids)
+        {
+            var requestUri = $"items/{commentId}";
+            var comment = await GetApiResponse<CommentDto>(requestUri);
+            comments.Add(comment);
+        }
+
+        return comments;
     }
 
-    private async Task<List<StoryHnDto>> GetStoriesAsync(int timeThreshold, int pointsThreshold, string query = "")
+    private async Task<List<StoryHnDto>> GetStoriesAsync(string query = "")
     {
-        var stories = new List<StoryHnDto>();
+        const string tags = "story";
+        const int hitsPerPage = 200;
+        const int startingPage = 0;
+        const int pointsThreshold = 3;
+        var timeThreshold = await _storiesRepo.GetLatestTimestampAsync();
         
-        var apiResponseObject = await MakeRequestAsync(timeThreshold,
-            pointsThreshold,
-            0,
-            100,
-            "story",
-            query);
+        var search = "search?query={0}" +
+                   "&tags={1}" +
+                   "&hitsPerPage={2}" +
+                   "&page={3}" +
+                   "&numericFilters=points>{4}," +
+                   "created_at_i>{5}";
 
-        if (apiResponseObject is null || apiResponseObject.Stories.Length == 0)
+        var searchQuery = string.Format(search, query, tags, hitsPerPage, startingPage, pointsThreshold, timeThreshold);
+        _logger.LogInformation($"Searching URL: {_httpClient.BaseAddress}{searchQuery}");
+        
+        var apiResponse = await GetApiResponse<ApiResponse<StoryHnDto>>(searchQuery);
+        _logger.LogInformation($"Fetched {apiResponse.Data.Length * apiResponse.NumberOfPages} new stories");
+        
+        var stories = new List<StoryHnDto>(apiResponse.Data.Length);
+        
+        if (apiResponse.Data.Length == 0)
         {
             return stories;
         }
 
-        if (apiResponseObject.NumberOfPages < 2)
+        if (apiResponse.NumberOfPages < 2)
         {
-            return apiResponseObject.Stories.ToList();
+            return apiResponse.Data.ToList();
         }
 
-        var requestsLimit = Math.Min(apiResponseObject.NumberOfPages, 5_000);
+        var numberOfPagesLimit = Math.Min(apiResponse.NumberOfPages, 3);
         
-        for (var i = 1; i <= requestsLimit; i++)
+        for (var i = 1; i <= numberOfPagesLimit; i++)
         {
-            var nextPageResponse = await MakeRequestAsync(timeThreshold, 
-                pointsThreshold,
-                i,
-                100,
-                "story",
-                query);
-            
-            if (nextPageResponse is null) continue;
-            
-            stories.AddRange(nextPageResponse.Stories);
+            var nextPageResponse = await GetApiResponse<ApiResponse<StoryHnDto>>(string.Format(search, query, tags, hitsPerPage, i, pointsThreshold, timeThreshold));
+            stories.AddRange(nextPageResponse.Data);
         }
         
         return stories;
@@ -80,14 +98,13 @@ public class ApiConnector : IApiConnector
 
     public async IAsyncEnumerable<StoryHnDto?> GetNewStoriesAsync()
     {
-        var timeThreshold = await _storiesRepo.GetLatestTimestampAsync();
-        const int pointsThreshold = 3;
-
-        var storyDtos = await GetStoriesAsync(timeThreshold, pointsThreshold);
+        var storyDtos = await GetStoriesAsync();
 
         foreach (var storyDto in storyDtos)
         {
-            await _storiesRepo.AddAsync(storyDto);
+            var commentsDto = await GetCommentsForStory(storyDto);
+            var storyWithComments = storyDto with { Comments = _mapper.Map<List<Comment>>(commentsDto) };
+            await _storiesRepo.AddAsync(storyWithComments);
             yield return storyDto;
         }
     }

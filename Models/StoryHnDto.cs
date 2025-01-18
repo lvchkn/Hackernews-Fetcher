@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Hackernews_Fetcher.Models;
 
-public record StoryHnDto
+public record StoryHnDto : IMessage
 {
     [JsonPropertyName("story_id")]
     public int Id { get; init; }
@@ -11,7 +11,7 @@ public record StoryHnDto
     public string By { get; init; } = string.Empty;
 
     [JsonPropertyName("children")] 
-    public int[] Kids { get; init; } = Array.Empty<int>();
+    public int[] Kids { get; init; } = [];
     
     [JsonPropertyName("created_at_i")]
     public int Time { get; init; }
@@ -30,4 +30,6 @@ public record StoryHnDto
     
     [JsonPropertyName("url")] 
     public string Url { get; init; } = string.Empty;
+    
+    public List<Comment> Comments { get; init; } = [];
 }

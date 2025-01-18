@@ -4,8 +4,8 @@ namespace Hackernews_Fetcher.Repos;
 
 public interface IStoriesRepository
 {
-    Task<int> GetLatestTimestampAsync();
-    Task<List<StoryHnDto>> GetAllAsync();
+    Task<long> GetLatestTimestampAsync();
+    Task<List<StoryHnDto>> GetAllAsync(int limit = 500);
     Task<StoryHnDto> GetByIdAsync(int id);
     Task AddAsync(StoryHnDto storyHnDto);
 }

@@ -1,7 +1,6 @@
+using System.Reflection;
 using Hackernews_Fetcher.Models;
 using Hackernews_Fetcher.Repos;
-using Hackernews_Fetcher.Rmq;
-using Hackernews_Fetcher.Rmq.Publisher;
 using Hackernews_Fetcher.Services;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
@@ -21,37 +20,33 @@ public static class DI
     {
         _configuration = configuration;
         
-        services
-            .AddRabbit()
-            .AddHttp()
-            .AddMongoDb()
-            .AddSingleton<IApiConnector, ApiConnector>()
-            .AddSingleton<ICommentsRepository, CommentsRepository>()
-            .AddSingleton<IStoriesRepository, StoriesRepository>()
-            .AddHostedService<Worker>();
+        services.AddAutoMapper(Assembly.GetExecutingAssembly());
+        services.AddRabbitMq();
+        services.AddMongoDb();
+        services.AddHttp();
+
+        services.AddSingleton<IApiConnector, ApiConnector>();
+        services.AddSingleton<ICommentsRepository, CommentsRepository>();
+        services.AddSingleton<IStoriesRepository, StoriesRepository>();
+        services.AddHostedService<Worker>();
         
         return services;
     }
 
-    private static IServiceCollection AddRabbit(this IServiceCollection services)
+    private static IServiceCollection AddRabbitMq(this IServiceCollection services)
     {
-        var rabbitHostname = _configuration.GetValue<string>("RabbitMq:Hostname");
-        var rabbitPort = _configuration.GetValue<int>("RabbitMq:Port");
-        var rabbitUsername = _configuration.GetValue<string>("RabbitMq:Username");
-        var rabbitPassword = _configuration.GetValue<string>("RabbitMq:Password");
+        var rmqHostname = _configuration.GetValue<string>("RabbitMq:Hostname");
+        var rmqPort = _configuration.GetValue<int>("RabbitMq:Port");
+        var rmqUsername = _configuration.GetValue<string>("RabbitMq:Username");
+        var rmqPassword = _configuration.GetValue<string>("RabbitMq:Password");
+        
+        var connectionString = $"amqp://{rmqUsername}:{rmqPassword}@{rmqHostname}:{rmqPort}";
 
-        services.AddSingleton(_ => new ConnectionFactory()
+        services.AddSingleton<IConnectionFactory>(new ConnectionFactory
         {
-            HostName = rabbitHostname,
-            Port = rabbitPort,
-            UserName = rabbitUsername,
-            Password = rabbitPassword,
+            Uri = new Uri(connectionString),
             VirtualHost = "/"
         });
-
-        services.AddSingleton<IChannelFactory, ChannelFactory>();
-        services.AddSingleton<ChannelWrapper>();
-        services.AddSingleton<Publisher>();
 
         return services;
     }
