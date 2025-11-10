@@ -19,13 +19,12 @@ public static class DI
     public static IServiceCollection AddDependencies(this IServiceCollection services, IConfiguration configuration)
     {
         _configuration = configuration;
-
-        services.AddScoped<Mapper>();
         
         services.AddRabbitMq();
         services.AddMongoDb();
         services.AddHttp();
 
+        services.AddSingleton<Mapper>();
         services.AddSingleton<IApiConnector, ApiConnector>();
         services.AddSingleton<ICommentsRepository, CommentsRepository>();
         services.AddSingleton<IStoriesRepository, StoriesRepository>();

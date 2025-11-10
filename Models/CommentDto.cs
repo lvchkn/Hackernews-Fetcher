@@ -6,7 +6,7 @@ namespace Hackernews_Fetcher.Models;
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public record CommentDto : IMessage
 {
-    public string Id { get; init; } = string.Empty;
+    public int Id { get; init; }
     
     [JsonPropertyName("author")]
     public string By { get; init; } = string.Empty;
