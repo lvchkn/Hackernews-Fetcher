@@ -1,7 +1,7 @@
-using System.Reflection;
 using Hackernews_Fetcher.Models;
 using Hackernews_Fetcher.Repos;
 using Hackernews_Fetcher.Services;
+using Hackernews_Fetcher.Utils;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.IdGenerators;
@@ -15,12 +15,13 @@ namespace Hackernews_Fetcher;
 
 public static class DI
 {
-    private static IConfiguration _configuration = default!;
+    private static IConfiguration _configuration = null!;
     public static IServiceCollection AddDependencies(this IServiceCollection services, IConfiguration configuration)
     {
         _configuration = configuration;
+
+        services.AddScoped<Mapper>();
         
-        services.AddAutoMapper(Assembly.GetExecutingAssembly());
         services.AddRabbitMq();
         services.AddMongoDb();
         services.AddHttp();
@@ -67,7 +68,6 @@ public static class DI
             .AddHttpClient("ApiV0", options =>
             { 
                 options.BaseAddress = new Uri(hackernewsApiUrl ?? string.Empty);
-                options.Timeout = TimeSpan.FromSeconds(600);
             })
             .AddPolicyHandler(retryPolicy)
             .AddPolicyHandler(timeoutPolicy);
