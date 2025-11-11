@@ -27,5 +27,25 @@ services:
     restart: always
     depends_on:
       - mongo
+  prometheus:
+    image: prom/prometheus:v3.7.3
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  grafana:
+    image: grafana/grafana:12.2.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
 volumes:
   mongodata:
+  grafana-data:
