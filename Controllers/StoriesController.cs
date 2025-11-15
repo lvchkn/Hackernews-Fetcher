@@ -11,7 +11,7 @@ public static class StoriesController
         {
             var stories = await storiesRepository.GetAllAsync();
 
-            return Results.Ok(stories);
+            return Results.Ok(stories.OrderByDescending(s => s.Time).Take(100));
         });
         
         app.MapGet("/api/stories/{id:int}", async (

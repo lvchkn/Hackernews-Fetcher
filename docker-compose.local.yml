@@ -6,6 +6,13 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: localhost:24224
+        tag: "rabbitmq"
+    depends_on:
+      - fluentbit
   mongo:
     image: mongo:7.0.16-jammy
     container_name: mongodb
@@ -17,6 +24,13 @@ services:
     restart: unless-stopped
     volumes:
       - mongodata:/data/db
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: localhost:24224
+        tag: "mongodb"
+    depends_on:
+      - fluentbit
   mongoexpress:
     image: mongo-express:1.0-20-alpine3.19
     container_name: mongoexpress
@@ -27,5 +41,70 @@ services:
     restart: always
     depends_on:
       - mongo
+      - fluentbit
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: localhost:24224
+        tag: "mongoexpress"
+  prometheus:
+    image: prom/prometheus:v3.7.3
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: localhost:24224
+        tag: "prometheus"
+    depends_on:
+      - fluentbit
+  grafana:
+    image: grafana/grafana:12.2.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/datasources:/etc/grafana/provisioning/datasources
+      - ./observability/dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - prometheus
+      - victorialogs
+      - fluentbit
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: localhost:24224
+        tag: "grafana"
+  victorialogs:
+    image: victoriametrics/victoria-logs:v1.37.2
+    container_name: victorialogs
+    ports:
+      - '9428:9428'
+    volumes:
+      - victorialogs-data:/victoria-logs-data
+    command:
+      - -storageDataPath=/victoria-logs-data
+      - -loggerFormat=json
+  fluentbit:
+    image: cr.fluentbit.io/fluent/fluent-bit:latest
+    container_name: fluentbit
+    ports:
+      - '24224:24224'
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./observability/fluent-bit-fw.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./observability/parsers.conf:/fluent-bit/etc/parsers.conf
+    depends_on:
+      - victorialogs
 volumes:
   mongodata:
+  grafana-data:
+  prometheus-data:
+  victorialogs-data:

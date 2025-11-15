@@ -4,5 +4,5 @@ namespace Hackernews_Fetcher.Services;
 
 public interface IApiConnector
 {
-    IAsyncEnumerable<StoryHnDto?> GetNewStoriesAsync();
+    IAsyncEnumerable<StoryHnDto> GetNewStoriesAsync(CancellationToken cancellationToken = default);
 }

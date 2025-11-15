@@ -1,8 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Hackernews_Fetcher.Services;
-using AutoMapper;
-using Hackernews_Fetcher.Models;
+using Hackernews_Fetcher.Utils;
 using RabbitMQ.Client;
 
 namespace Hackernews_Fetcher;
@@ -12,12 +11,12 @@ public class Worker : BackgroundService
     private readonly ILogger<Worker> _logger;
     private readonly IApiConnector _apiConnector;
     private readonly IConnectionFactory _connectionFactory;
-    private readonly IMapper _mapper;
+    private readonly Mapper _mapper;
 
     public Worker(ILogger<Worker> logger, 
         IApiConnector apiConnector, 
         IConnectionFactory connectionFactory, 
-        IMapper mapper)
+        Mapper mapper)
     {
         _logger = logger;
         _apiConnector = apiConnector;
@@ -48,9 +47,7 @@ public class Worker : BackgroundService
         {
             await foreach (var storyDto in _apiConnector.GetNewStoriesAsync().WithCancellation(stoppingToken))
             {
-                if (storyDto is null) continue;
-                
-                var serializedMessageBody = JsonSerializer.Serialize(_mapper.Map<StoryPublishDto>(storyDto), jsonSerializerOptions);
+                var serializedMessageBody = JsonSerializer.Serialize(_mapper.StoryHnDtoToStoryPublishDto(storyDto), jsonSerializerOptions);
                 var messageBody = Encoding.UTF8.GetBytes(serializedMessageBody);
                     
                 var publishProperties = new BasicProperties

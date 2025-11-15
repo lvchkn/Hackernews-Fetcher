@@ -1,5 +1,5 @@
 using Hackernews_Fetcher.Models;
-using AutoMapper;
+using Hackernews_Fetcher.Utils;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
@@ -8,9 +8,9 @@ namespace Hackernews_Fetcher.Repos;
 public class StoriesRepository : IStoriesRepository
 {
     private readonly IMongoCollection<Story> _storiesCollection;
-    private readonly IMapper _mapper;
+    private readonly Mapper _mapper;
 
-    public StoriesRepository(IOptions<MongoSettings> mongoSettings, IMapper mapper)
+    public StoriesRepository(IOptions<MongoSettings> mongoSettings, Mapper mapper)
     {
         var mongoClient = new MongoClient(mongoSettings.Value.ConnectionString);
         var database = mongoClient.GetDatabase(mongoSettings.Value.FeedDatabaseName);
@@ -28,7 +28,7 @@ public class StoriesRepository : IStoriesRepository
             .Limit(1)
             .FirstOrDefaultAsync();
 
-        var timestamp = latestStory?.Time ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var timestamp = latestStory?.Time ?? 0;
 
         return timestamp;
     }
@@ -38,7 +38,7 @@ public class StoriesRepository : IStoriesRepository
         var storiesCursor = await _storiesCollection.Find(_ => true).Limit(limit).ToCursorAsync();
 
         var stories = await storiesCursor.ToListAsync();
-        var storyDtos = stories.Select(story => _mapper.Map<StoryHnDto>(story))
+        var storyDtos = stories.Select(story => _mapper.StoryToStoryHnDto(story))
             .ToList();
 
         return storyDtos;
@@ -50,14 +50,14 @@ public class StoriesRepository : IStoriesRepository
         var storiesCursor = await _storiesCollection.FindAsync(filter);
 
         var story = await storiesCursor.FirstOrDefaultAsync();
-        var storyDto = _mapper.Map<StoryHnDto>(story);
+        var storyDto = _mapper.StoryToStoryHnDto(story);
 
         return storyDto;
     }
 
     public async Task AddAsync(StoryHnDto storyHnDto)
     {
-        var story = _mapper.Map<Story>(storyHnDto);
+        var story = _mapper.StoryHnDtoToStory(storyHnDto);
         var filter = Builders<Story>.Filter.Eq(s => s.Id, story.Id);
 
         await _storiesCollection.ReplaceOneAsync(filter, story, new ReplaceOptions { IsUpsert = true });
