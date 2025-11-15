@@ -28,7 +28,7 @@ public class StoriesRepository : IStoriesRepository
             .Limit(1)
             .FirstOrDefaultAsync();
 
-        var timestamp = latestStory?.Time ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var timestamp = latestStory?.Time ?? 0;
 
         return timestamp;
     }

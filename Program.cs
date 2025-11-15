@@ -1,27 +1,54 @@
 using Hackernews_Fetcher;
 using Hackernews_Fetcher.Controllers;
 using Prometheus;
+using Serilog;
+using Serilog.Events;
+using Serilog.Formatting.Compact;
 
-var builder = WebApplication.CreateBuilder();
-builder.Configuration.AddEnvironmentVariables();
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console(new CompactJsonFormatter())
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+    .Enrich.FromLogContext()
+    .CreateBootstrapLogger();
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddDependencies(builder.Configuration);
-builder.Services.UseHttpClientMetrics();
-
-var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
+try
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    var builder = WebApplication.CreateBuilder();
+    builder.Configuration.AddEnvironmentVariables();
+
+    builder.Services.AddSerilog(configuration =>
+    {
+        configuration.ReadFrom.Configuration(builder.Configuration)
+            .Enrich.WithProperty("Environment", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"));
+    });
+    builder.Services.AddControllers();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+    builder.Services.AddDependencies(builder.Configuration);
+    builder.Services.UseHttpClientMetrics();
+
+    var app = builder.Build();
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    app.UseSerilogRequestLogging();
+    app.MapStoriesEndpoints();
+    app.UseHttpMetrics();
+    app.MapMetrics();
+
+    app.Run();
 }
-
-app.MapStoriesEndpoints();
-app.UseHttpMetrics();
-app.MapMetrics();
-
-app.Run();
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Fatal error occured while running the application");
+    throw;
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 

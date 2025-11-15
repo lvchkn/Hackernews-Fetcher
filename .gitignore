@@ -2,9 +2,7 @@
 .idea/
 bin/
 obj/
-appsettings.Development.json
 appsettings.Production.json
 docker-compose.test.yml
 .env*
 /Folder.DotSettings.user
-global.json

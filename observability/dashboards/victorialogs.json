@@ -1,0 +1,110 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_VICTORIAMETRICS-LOGS-DATASOURCE",
+      "label": "victoriametrics-logs-datasource",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "victoriametrics-logs-datasource",
+      "pluginName": "VictoriaLogs"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "12.2.0"
+    },
+    {
+      "type": "panel",
+      "id": "logs",
+      "name": "Logs",
+      "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "victoriametrics-logs-datasource",
+      "name": "VictoriaLogs",
+      "version": "0.21.4"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "${DS_VICTORIAMETRICS-LOGS-DATASOURCE}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": false,
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": false,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "${DS_VICTORIAMETRICS-LOGS-DATASOURCE}"
+          },
+          "editorMode": "code",
+          "expr": "*",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Logs from all containers",
+      "type": "logs"
+    }
+  ],
+  "schemaVersion": 42,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "VictoriaLogs",
+  "uid": "adr6whz",
+  "version": 3,
+  "weekStart": "",
+  "id": null
+}
