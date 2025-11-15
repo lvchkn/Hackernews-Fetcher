@@ -19,7 +19,8 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
-        with: 
+        with:
+          fetch-depth: 0
           fetch-tags: 'true'
 
       - name: Log in to the Github Container registry
