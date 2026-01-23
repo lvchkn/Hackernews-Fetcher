@@ -10,9 +10,12 @@ services:
       driver: fluentd
       options:
         fluentd-address: localhost:24224
+        fluentd-retry-wait: "2s"
+        fluentd-max-retries: 10
         tag: "rabbitmq"
     depends_on:
-      - fluentbit
+      fluentbit:
+        condition: service_started
   mongo:
     image: mongo:7.0.16-jammy
     container_name: mongodb
@@ -28,9 +31,12 @@ services:
       driver: fluentd
       options:
         fluentd-address: localhost:24224
+        fluentd-retry-wait: "2s"
+        fluentd-max-retries: 10
         tag: "mongodb"
     depends_on:
-      - fluentbit
+      fluentbit:
+        condition: service_started
   mongoexpress:
     image: mongo-express:1.0-20-alpine3.19
     container_name: mongoexpress
@@ -40,12 +46,16 @@ services:
       - ME_CONFIG_MONGODB_URL=mongodb://${MONGO_USER}:${MONGO_PW}@mongodb:27017
     restart: always
     depends_on:
-      - mongo
-      - fluentbit
+      mongo:
+        condition: service_started
+      fluentbit:
+        condition: service_started
     logging:
       driver: fluentd
       options:
         fluentd-address: localhost:24224
+        fluentd-retry-wait: "2s"
+        fluentd-max-retries: 10
         tag: "mongoexpress"
   prometheus:
     image: prom/prometheus:v3.7.3
@@ -59,9 +69,12 @@ services:
       driver: fluentd
       options:
         fluentd-address: localhost:24224
+        fluentd-retry-wait: "2s"
+        fluentd-max-retries: 10
         tag: "prometheus"
     depends_on:
-      - fluentbit
+      fluentbit:
+        condition: service_started
   grafana:
     image: grafana/grafana:12.2.0
     container_name: grafana
@@ -74,13 +87,18 @@ services:
       - ./observability/datasources:/etc/grafana/provisioning/datasources
       - ./observability/dashboards:/etc/grafana/provisioning/dashboards
     depends_on:
-      - prometheus
-      - victorialogs
-      - fluentbit
+      fluentbit:
+        condition: service_started
+      prometheus:
+        condition: service_started
+      victorialogs:
+        condition: service_started
     logging:
       driver: fluentd
       options:
         fluentd-address: localhost:24224
+        fluentd-retry-wait: "2s"
+        fluentd-max-retries: 10
         tag: "grafana"
   victorialogs:
     image: victoriametrics/victoria-logs:v1.37.2
